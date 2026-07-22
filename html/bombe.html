@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>💣 BOMBE</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #111;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Courier New', monospace;
+      color: #fff;
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    #scene {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      padding: 20px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    /* ── Timer Display ───────────────────────────────── */
+    #timer {
+      font-size: clamp(52px, 14vw, 80px);
+      font-weight: 900;
+      color: #ff3333;
+      text-shadow: 0 0 20px #ff0000, 0 0 40px #ff000055;
+      letter-spacing: 4px;
+      font-variant-numeric: tabular-nums;
+      min-height: 1.2em;
+      transition: color 0.3s, opacity 0.4s;
+      opacity: 0;
+      pointer-events: none;
+    }
+    #timer.visible {
+      opacity: 1;
+    }
+    #timer.urgent {
+      color: #ff0000;
+      animation: timerPulse 0.5s infinite alternate;
+    }
+    @keyframes timerPulse {
+      from { text-shadow: 0 0 10px #ff0000; }
+      to   { text-shadow: 0 0 40px #ff0000, 0 0 80px #ff0000; }
+    }
+
+    /* ── Bomb SVG ────────────────────────────────────── */
+    #bomb-wrap {
+      position: relative;
+      width: clamp(160px, 50vw, 220px);
+      height: clamp(190px, 60vw, 260px);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    #bomb-svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    /* shake when ticking */
+    .ticking #bomb-svg {
+      animation: bombShake 0.45s infinite;
+      transform-origin: center bottom;
+    }
+    @keyframes bombShake {
+      0%   { transform: rotate(0deg) translateX(0); }
+      20%  { transform: rotate(-2.5deg) translateX(-3px); }
+      40%  { transform: rotate(2.5deg) translateX(3px); }
+      60%  { transform: rotate(-1.5deg) translateX(-2px); }
+      80%  { transform: rotate(1.5deg) translateX(2px); }
+      100% { transform: rotate(0deg) translateX(0); }
+    }
+    .urgent-shake #bomb-svg {
+      animation: bombShakeFast 0.2s infinite;
+    }
+    @keyframes bombShakeFast {
+      0%   { transform: rotate(0deg); }
+      25%  { transform: rotate(-4deg) translateX(-5px); }
+      75%  { transform: rotate(4deg) translateX(5px); }
+      100% { transform: rotate(0deg); }
+    }
+
+    /* fuse spark blinking */
+    #fuse-spark {
+      opacity: 0;
+    }
+    .ticking #fuse-spark,
+    .urgent-shake #fuse-spark {
+      animation: sparkBlink 0.25s infinite alternate;
+    }
+    @keyframes sparkBlink {
+      from { opacity: 0.2; }
+      to   { opacity: 1; }
+    }
+    /* fuse trail gets shorter as bomb ticks (visual only) */
+
+    /* ── Status Text ─────────────────────────────────── */
+    #status { display: none; }
+
+    /* ── Start Button ────────────────────────────────── */
+    #start-btn {
+      background: linear-gradient(145deg, #dd2222, #880000);
+      color: #fff;
+      border: 3px solid #ff4444;
+      border-radius: 60px;
+      padding: 18px 52px;
+      font-size: clamp(22px, 6vw, 32px);
+      font-weight: 900;
+      letter-spacing: 4px;
+      cursor: pointer;
+      box-shadow: 0 6px 24px #ff000066, inset 0 1px 0 #ff888855;
+      transition: transform 0.1s, box-shadow 0.1s;
+      min-width: 180px;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    #start-btn:active {
+      transform: scale(0.94);
+      box-shadow: 0 2px 10px #ff000066;
+    }
+    #start-btn:disabled {
+      background: #333;
+      border-color: #555;
+      box-shadow: none;
+      cursor: not-allowed;
+      color: #666;
+    }
+
+    /* ── Explosion Overlay ───────────────────────────── */
+    #explosion-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 20px;
+    }
+    #explosion-overlay.active {
+      display: flex;
+    }
+
+    #explosion-bg {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, #ffff00 0%, #ff6600 40%, #cc0000 70%, #550000 100%);
+      animation: explodeBgPulse 0.15s steps(1) infinite;
+    }
+    @keyframes explodeBgPulse {
+      0%   { background: radial-gradient(circle at center, #ffff00 0%, #ff8800 40%, #cc0000 70%, #330000 100%); }
+      33%  { background: radial-gradient(circle at center, #ffffff 0%, #ffff00 30%, #ff4400 60%, #770000 100%); }
+      66%  { background: radial-gradient(circle at center, #ffcc00 0%, #ff4400 40%, #990000 70%, #220000 100%); }
+      100% { background: radial-gradient(circle at center, #ff8800 0%, #ff3300 40%, #880000 70%, #110000 100%); }
+    }
+
+    /* Particle sparks */
+    .spark {
+      position: absolute;
+      z-index: 1;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #ffff00;
+      box-shadow: 0 0 8px #ff8800;
+      animation: sparkFly 0.8s ease-out forwards;
+    }
+    @keyframes sparkFly {
+      to {
+        transform: translate(var(--dx), var(--dy)) scale(0);
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div id="scene">
+
+  <div id="timer">--:--</div>
+
+  <div id="bomb-wrap" onclick="toggleTimer()">
+    <svg id="bomb-svg" viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="bodyGrad" cx="38%" cy="32%" r="65%">
+          <stop offset="0%"   stop-color="#606060"/>
+          <stop offset="45%"  stop-color="#252525"/>
+          <stop offset="100%" stop-color="#0d0d0d"/>
+        </radialGradient>
+        <radialGradient id="shineGrad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.25"/>
+          <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+        </radialGradient>
+        <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur stdDeviation="3" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="sparkGlow" x="-100%" y="-100%" width="300%" height="300%">
+          <feGaussianBlur stdDeviation="4" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+
+      <!-- Fuse rope: wavy S-curve from top of connector up-left -->
+      <path id="fuse-rope"
+            d="M 100 62 Q 122 48 112 30 Q 100 12 118 2"
+            stroke="#8B5C1A" stroke-width="4.5" fill="none"
+            stroke-linecap="round" stroke-linejoin="round"/>
+
+      <!-- Fuse spark at tip -->
+      <g id="fuse-spark" filter="url(#sparkGlow)" transform="translate(118,2)">
+        <circle r="7" fill="#FFE000" opacity="0.9"/>
+        <circle r="4" fill="#FFFFFF"/>
+        <!-- tiny star spikes -->
+        <line x1="0" y1="-10" x2="0" y2="-13" stroke="#FFE000" stroke-width="2" stroke-linecap="round"/>
+        <line x1="0" y1="10"  x2="0" y2="13"  stroke="#FFE000" stroke-width="2" stroke-linecap="round"/>
+        <line x1="-10" y1="0" x2="-13" y2="0" stroke="#FFE000" stroke-width="2" stroke-linecap="round"/>
+        <line x1="10"  y1="0" x2="13"  y2="0" stroke="#FFE000" stroke-width="2" stroke-linecap="round"/>
+        <line x1="-7" y1="-7" x2="-10" y2="-10" stroke="#FFE000" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="7"  y1="-7" x2="10"  y2="-10" stroke="#FFE000" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="-7" y1="7"  x2="-10" y2="10"  stroke="#FFE000" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="7"  y1="7"  x2="10"  y2="10"  stroke="#FFE000" stroke-width="1.5" stroke-linecap="round"/>
+      </g>
+
+      <!-- Fuse connector block -->
+      <rect x="86" y="58" width="28" height="22" rx="5" ry="5"
+            fill="#444" stroke="#333" stroke-width="1.5"/>
+      <rect x="91" y="62" width="18" height="14" rx="3" ry="3" fill="#333"/>
+
+      <!-- Main bomb body -->
+      <circle cx="100" cy="155" r="82" fill="#1a1a1a" opacity="0.4"/>
+      <circle cx="100" cy="153" r="80" fill="url(#bodyGrad)"/>
+
+      <!-- Rim/band around equator -->
+      <ellipse cx="100" cy="153" rx="80" ry="10"
+               fill="none" stroke="#303030" stroke-width="3" opacity="0.5"/>
+
+      <!-- Shine highlight -->
+      <ellipse cx="72" cy="118" rx="24" ry="14"
+               fill="url(#shineGrad)" transform="rotate(-25,72,118)"/>
+
+      <!-- Small bolt details -->
+      <circle cx="60"  cy="145" r="4" fill="#333" stroke="#444" stroke-width="1"/>
+      <circle cx="140" cy="145" r="4" fill="#333" stroke="#444" stroke-width="1"/>
+      <circle cx="100" cy="215" r="4" fill="#333" stroke="#444" stroke-width="1"/>
+
+    </svg>
+  </div>
+
+  <div id="status">Drücke START um die Bombe zu zünden!</div>
+
+  <button id="start-btn" onclick="handleBtn()">START</button>
+
+</div>
+
+<!-- Explosion overlay -->
+<div id="explosion-overlay">
+  <div id="explosion-bg"></div>
+</div>
+
+<script>
+  // ─── State ──────────────────────────────────────────
+  let audioCtx       = null;
+  let countdownTimer = null;
+  let tickTimer      = null;
+  let remaining      = 0;
+
+  // ─── Audio Context (lazy, created on user gesture) ──
+  function getAudio() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }
+
+  // ─── Tick sound ─────────────────────────────────────
+  function playTick() {
+    const ctx = getAudio();
+    const now = ctx.currentTime;
+
+    // Very short noise burst — like a mechanical escapement click
+    const sr  = ctx.sampleRate;
+    const len = Math.floor(sr * 0.04);
+    const buf = ctx.createBuffer(1, len, sr);
+    const d   = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1);
+
+    const noise = ctx.createBufferSource();
+    noise.buffer = buf;
+
+    // Bandpass around 2–4 kHz gives that crisp mechanical "tick"
+    const bp = ctx.createBiquadFilter();
+    bp.type            = 'bandpass';
+    bp.frequency.value = 2800;
+    bp.Q.value         = 0.7;
+
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.22, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+
+    noise.connect(bp);
+    bp.connect(gain);
+    gain.connect(ctx.destination);
+    noise.start(now);
+    noise.stop(now + 0.04);
+  }
+
+  // ─── Explosion sound ─────────────────────────────────
+  function playExplosion() {
+    const ctx = getAudio();
+    const now = ctx.currentTime;
+
+    // White-noise burst
+    const sr     = ctx.sampleRate;
+    const buf    = ctx.createBuffer(1, sr * 2.5, sr);
+    const data   = buf.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+
+    const noise  = ctx.createBufferSource();
+    noise.buffer = buf;
+
+    const lpf    = ctx.createBiquadFilter();
+    lpf.type     = 'lowpass';
+    lpf.frequency.setValueAtTime(2000, now);
+    lpf.frequency.exponentialRampToValueAtTime(120, now + 2.2);
+
+    const ng     = ctx.createGain();
+    ng.gain.setValueAtTime(1.8, now);
+    ng.gain.exponentialRampToValueAtTime(0.001, now + 2.2);
+
+    noise.connect(lpf);
+    lpf.connect(ng);
+    ng.connect(ctx.destination);
+    noise.start(now);
+    noise.stop(now + 2.5);
+
+    // Low "boom" sub oscillator
+    const sub  = ctx.createOscillator();
+    const sg   = ctx.createGain();
+    sub.connect(sg);
+    sg.connect(ctx.destination);
+
+    sub.type = 'sine';
+    sub.frequency.setValueAtTime(120, now);
+    sub.frequency.exponentialRampToValueAtTime(25, now + 1.5);
+    sg.gain.setValueAtTime(2.0, now);
+    sg.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
+    sub.start(now);
+    sub.stop(now + 1.6);
+
+    // High crack
+    const crack = ctx.createOscillator();
+    const cg    = ctx.createGain();
+    crack.connect(cg);
+    cg.connect(ctx.destination);
+    crack.type            = 'sawtooth';
+    crack.frequency.value = 440;
+    cg.gain.setValueAtTime(0.8, now);
+    cg.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+    crack.start(now);
+    crack.stop(now + 0.15);
+  }
+
+  // ─── Helpers ─────────────────────────────────────────
+  function fmt(s) {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return String(m).padStart(2,'0') + ':' + String(sec).padStart(2,'0');
+  }
+
+  function getBombWrap()   { return document.getElementById('bomb-wrap'); }
+  function getTimerEl()    { return document.getElementById('timer'); }
+  function getStartBtn()   { return document.getElementById('start-btn'); }
+
+  // ─── Toggle timer visibility on bomb click ───────────
+  function toggleTimer() {
+    getTimerEl().classList.toggle('visible');
+  }
+
+  // ─── Schedule next tick ──────────────────────────────
+  function scheduleTick() {
+    clearTimeout(tickTimer);
+    tickTimer = setTimeout(() => {
+      if (remaining <= 0) return;
+      playTick();
+      scheduleTick();
+    }, 1000);
+  }
+
+  // ─── Button dispatcher ───────────────────────────────
+  function handleBtn() {
+    const btn = getStartBtn();
+    if (btn.textContent === 'START') startBomb();
+    else stopBomb();
+  }
+
+  // ─── Stop ────────────────────────────────────────────
+  function stopBomb() {
+    clearInterval(countdownTimer);
+    clearTimeout(tickTimer);
+    remaining = 0;
+
+    getBombWrap().classList.remove('ticking', 'urgent-shake');
+    getTimerEl().classList.remove('urgent', 'visible');
+    getTimerEl().textContent = '--:--';
+    getStartBtn().textContent = 'START';
+  }
+
+  // ─── Start ───────────────────────────────────────────
+  function startBomb() {
+    getAudio();
+
+    const params = new URLSearchParams(window.location.search);
+    const msParam = parseInt(params.get('ms'), 10);
+    if (!isNaN(msParam) && msParam > 0) {
+      remaining = Math.round(msParam / 1000);
+    } else {
+      const minSec = 2  * 60;
+      const maxSec = 10 * 60;
+      remaining = Math.floor(Math.random() * (maxSec - minSec + 1)) + minSec;
+    }
+
+    getStartBtn().textContent = 'STOP';
+    getTimerEl().textContent = fmt(remaining);
+    getBombWrap().classList.add('ticking');
+
+    // First tick immediately
+    playTick();
+    scheduleTick();
+
+    // Countdown every second
+    countdownTimer = setInterval(() => {
+      remaining--;
+
+      getTimerEl().textContent = fmt(remaining);
+
+      if (remaining <= 30) {
+        getTimerEl().classList.add('urgent');
+        getBombWrap().classList.remove('ticking');
+        getBombWrap().classList.add('urgent-shake');
+      }
+
+      if (remaining <= 0) {
+        clearInterval(countdownTimer);
+        clearTimeout(tickTimer);
+        explode();
+      }
+    }, 1000);
+  }
+
+  // ─── Explode ─────────────────────────────────────────
+  function explode() {
+    getBombWrap().classList.remove('ticking', 'urgent-shake');
+    getTimerEl().classList.remove('urgent');
+    getTimerEl().textContent = '00:00';
+
+    playExplosion();
+
+    // Body flash
+    let f = 0;
+    const colors = ['#ff6600','#ffff00','#ff3300','#ff8800','#cc0000','#ff6600'];
+    const flashId = setInterval(() => {
+      document.body.style.backgroundColor = colors[f % colors.length];
+      f++;
+      if (f > 14) { clearInterval(flashId); document.body.style.backgroundColor = '#111'; }
+    }, 80);
+
+    // Show overlay
+    const overlay = document.getElementById('explosion-overlay');
+    overlay.classList.add('active');
+
+    // Spawn spark particles
+    for (let i = 0; i < 30; i++) {
+      const sp = document.createElement('div');
+      sp.className = 'spark';
+      const angle = (i / 30) * 360;
+      const dist  = 80 + Math.random() * 180;
+      const dx    = Math.cos(angle * Math.PI / 180) * dist;
+      const dy    = Math.sin(angle * Math.PI / 180) * dist;
+      sp.style.setProperty('--dx', dx + 'px');
+      sp.style.setProperty('--dy', dy + 'px');
+      sp.style.left = '50%';
+      sp.style.top  = '50%';
+      sp.style.animationDelay       = (Math.random() * 0.2) + 's';
+      sp.style.animationDuration    = (0.5 + Math.random() * 0.5) + 's';
+      sp.style.width  = (6 + Math.random() * 10) + 'px';
+      sp.style.height = sp.style.width;
+      sp.style.background = ['#FFE000','#FF8800','#FF4400','#FFFFFF'][Math.floor(Math.random()*4)];
+      overlay.appendChild(sp);
+    }
+
+    // Cleanup and reset after 3.5s
+    setTimeout(() => {
+      overlay.classList.remove('active');
+      overlay.querySelectorAll('.spark').forEach(s => s.remove());
+      getTimerEl().classList.remove('visible');
+      getTimerEl().textContent = '--:--';
+      getStartBtn().textContent = 'START';
+    }, 3500);
+  }
+</script>
+</body>
+</html>
