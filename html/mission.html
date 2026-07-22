@@ -218,10 +218,9 @@
       opacity: 0.25;
     }
     .digit-slot.concealed {
-      color: var(--red);
-      text-shadow: 0 0 14px var(--red);
-      font-size: clamp(30px, 9vw, 44px);
-      letter-spacing: 4px;
+      color: transparent;
+      text-shadow: 0 0 14px var(--g);
+      transition: color 0.3s, text-shadow 0.3s;
     }
     .digit-slot.empty {
       color: var(--gdim);
@@ -312,37 +311,11 @@
   <!-- Header -->
   <div class="header">
     <div class="classification">TOP SECRET</div>
-    <div class="title">MISSION BRIEFING</div>
-    <div class="divider">
-      <div class="divider-line"></div>
-      <span>◆</span>
-      <div class="divider-line"></div>
-    </div>
-  </div>
-
-  <!-- System info -->
-  <div class="info-panel">
-    <div class="info-row">
-      <span class="lbl">AGENT</span>
-      <span class="val">███████<span class="blink">_</span></span>
-    </div>
-    <div class="info-row">
-      <span class="lbl">CLEARANCE</span>
-      <span class="val">LEVEL-5</span>
-    </div>
-    <div class="info-row">
-      <span class="lbl">STATUS</span>
-      <span class="val" id="status-val">STANDBY</span>
-    </div>
-    <div class="info-row">
-      <span class="lbl">PROTOKOLL</span>
-      <span class="val">AES-256-GCM</span>
-    </div>
   </div>
 
   <!-- Code display -->
   <div style="display:flex;flex-direction:column;gap:14px;">
-    <div class="code-label">ZUGANGSCODE</div>
+    <div class="code-label">GEHEIMCODE</div>
     <div id="code-display">
       <div class="digit-slot empty" data-index="0">—</div>
       <div class="digit-slot empty" data-index="1">—</div>
@@ -370,8 +343,8 @@
         slot.textContent = '—';
         slot.classList.add('empty');
       } else if (concealed) {
-        slot.textContent = '███';
         slot.classList.add('concealed');
+        slot.textContent = '█';
       } else {
         slot.textContent = code[i];
         if (!skipAnimation) {
@@ -396,8 +369,6 @@
     void btn.offsetWidth; // reflow to restart animation
     btn.classList.add('scanning');
 
-    document.getElementById('status-val').textContent = 'INITIALISIERUNG...';
-    document.getElementById('status-val').classList.remove('red');
 
     const slots = document.querySelectorAll('.digit-slot');
     slots.forEach((slot, i) => {
@@ -417,8 +388,6 @@
             slot.classList.remove('scrambling');
             slot.textContent = code[i];
             if (i === 2) {
-              document.getElementById('status-val').textContent = 'AKTIV';
-              document.getElementById('status-val').classList.add('red');
             }
           }
         }, 55);
