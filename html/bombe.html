@@ -136,13 +136,46 @@
     /* ── Status Text ─────────────────────────────────── */
     #status { display: none; }
 
+    /* ── Button Row ─────────────────────────────────── */
+    #btn-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    /* ── Mute Button ────────────────────────────────── */
+    #mute-btn {
+      background: linear-gradient(145deg, #222, #111);
+      border: 3px solid #555;
+      border-radius: 60px;
+      width: 72px;
+      height: 72px;
+      cursor: pointer;
+      color: #aaa;
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.2s, color 0.2s;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    #mute-btn:active {
+      transform: scale(0.94);
+    }
+    #mute-btn.muted {
+      border-color: #ff4444;
+      color: #ff4444;
+    }
+
     /* ── Start Button ────────────────────────────────── */
     #start-btn {
       background: linear-gradient(145deg, #dd2222, #880000);
       color: #fff;
       border: 3px solid #ff4444;
       border-radius: 60px;
-      padding: 18px 52px;
+      padding: 18px 0;
+      text-align: center;
       font-family: 'Courier New', monospace;
       font-size: clamp(18px, 5vw, 26px);
       font-weight: 900;
@@ -150,7 +183,7 @@
       cursor: pointer;
       box-shadow: 0 6px 24px #ff000066, inset 0 1px 0 #ff888855;
       transition: transform 0.1s, box-shadow 0.1s;
-      min-width: 180px;
+      width: 180px;
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
     }
@@ -289,7 +322,10 @@
 
   <div id="status">Drücke START um die Bombe zu zünden!</div>
 
-  <button id="start-btn" onclick="handleBtn()">START</button>
+  <div id="btn-row">
+    <button id="start-btn" onclick="handleBtn()">START</button>
+    <button id="mute-btn" onclick="toggleMute()" title="Ticken stumm schalten">🕐🔊</button>
+  </div>
 
 </div>
 
@@ -304,6 +340,7 @@
   let countdownTimer = null;
   let tickTimer      = null;
   let remaining      = 0;
+  let tickMuted      = false;
 
   // ─── Audio Context (lazy, created on user gesture) ──
   function getAudio() {
@@ -316,6 +353,7 @@
 
   // ─── Tick sound ─────────────────────────────────────
   function playTick() {
+    if (tickMuted) return;
     const ctx = getAudio();
     const now = ctx.currentTime;
 
@@ -412,6 +450,15 @@
   function getBombWrap()   { return document.getElementById('bomb-wrap'); }
   function getTimerEl()    { return document.getElementById('timer'); }
   function getStartBtn()   { return document.getElementById('start-btn'); }
+  function getMuteBtn()    { return document.getElementById('mute-btn'); }
+
+  // ─── Toggle tick mute ────────────────────────────────
+  function toggleMute() {
+    tickMuted = !tickMuted;
+    const btn = getMuteBtn();
+    btn.textContent = tickMuted ? '🕐🔇' : '🕐🔊';
+    btn.classList.toggle('muted', tickMuted);
+  }
 
   // ─── Toggle timer visibility on bomb click ───────────
   function toggleTimer() {
