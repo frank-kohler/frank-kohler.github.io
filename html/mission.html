@@ -251,27 +251,27 @@
 
     /* ── Mission Button ────────────────────────────── */
     #mission-btn {
-      background: transparent;
-      color: var(--g);
-      border: 1px solid var(--g);
-      padding: 17px 0;
+      background: linear-gradient(145deg, #00aa55, #006633);
+      color: #fff;
+      border: 3px solid #00e676;
+      border-radius: 60px;
+      padding: 18px 0;
       font-family: 'Courier New', monospace;
-      font-size: clamp(13px, 3.8vw, 17px);
-      font-weight: 700;
-      letter-spacing: 6px;
+      font-size: clamp(18px, 5vw, 26px);
+      font-weight: 900;
+      letter-spacing: 4px;
       cursor: pointer;
       width: 100%;
-      text-shadow: 0 0 10px var(--g);
-      box-shadow: 0 0 20px rgba(0,230,118,0.08), inset 0 0 20px rgba(0,230,118,0.03);
-      transition: background 0.15s, box-shadow 0.15s;
+      box-shadow: 0 6px 24px rgba(0,230,118,0.35), inset 0 1px 0 rgba(0,230,118,0.3);
+      transition: transform 0.1s, box-shadow 0.1s;
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
       position: relative;
       overflow: hidden;
     }
     #mission-btn:active {
-      background: rgba(0,230,118,0.08);
-      box-shadow: 0 0 30px rgba(0,230,118,0.25);
+      transform: scale(0.94);
+      box-shadow: 0 2px 10px rgba(0,230,118,0.35);
     }
     /* scan sweep on click */
     #mission-btn::after {
@@ -280,7 +280,7 @@
       top: 0; left: -100%;
       width: 60%; height: 100%;
       background: linear-gradient(90deg,
-        transparent, rgba(0,230,118,0.2), transparent);
+        transparent, rgba(255,255,255,0.15), transparent);
     }
     #mission-btn.scanning::after {
       animation: btnSweep 0.55s ease-out;
@@ -421,6 +421,8 @@
 
     if (!pointerState.moved && Math.hypot(dx, dy) > 8) {
       pointerState.moved = true;
+      pointerState.origCode = [...code];
+      pointerState.currentTarget = null;
       spawnGhost(pointerState.index, pointerState.rect);
     }
 
@@ -439,12 +441,7 @@
       concealed = !concealed;
       renderCode(true);
     } else {
-      const target = slotAt(e.clientX, e.clientY);
-      if (target !== null && target !== pointerState.index) {
-        [code[pointerState.index], code[target]] = [code[target], code[pointerState.index]];
-      }
       killGhost();
-      clearDragOver();
       renderCode(true);
     }
     pointerState = null;
@@ -452,7 +449,11 @@
 
   document.addEventListener('pointercancel', () => {
     if (!pointerState) return;
-    if (pointerState.moved) { killGhost(); clearDragOver(); renderCode(true); }
+    if (pointerState.moved) {
+      code = [...pointerState.origCode];
+      killGhost();
+      renderCode(true);
+    }
     pointerState = null;
   });
 
@@ -484,18 +485,23 @@
   }
 
   function refreshDragOver(x, y) {
-    clearDragOver();
     const idx = slotAt(x, y);
+    if (idx === pointerState.currentTarget) return;
+
+    // Reset to original order, then apply new swap
+    code = [...pointerState.origCode];
     if (idx !== null && idx !== pointerState.index) {
-      document.querySelector(`.digit-slot[data-index="${idx}"]`)
-        .classList.add('drag-over');
+      [code[pointerState.index], code[idx]] = [code[idx], code[pointerState.index]];
     }
+    pointerState.currentTarget = idx;
+
+    renderCode(true);
+    // Re-apply dragging-src to the slot that is being dragged
+    document.querySelector(`.digit-slot[data-index="${pointerState.index}"]`)
+      .classList.add('dragging-src');
   }
 
-  function clearDragOver() {
-    document.querySelectorAll('.digit-slot.drag-over')
-      .forEach(s => s.classList.remove('drag-over'));
-  }
+  function clearDragOver() {}
 
   function slotAt(x, y) {
     for (const slot of document.querySelectorAll('.digit-slot')) {

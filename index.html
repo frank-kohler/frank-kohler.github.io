@@ -125,35 +125,30 @@
       align-items: center;
       gap: 20px;
       padding: 20px 22px;
-      border: 1px solid var(--border);
-      background: rgba(0,230,118,0.02);
+      border: 3px solid rgba(0,230,118,0.5);
+      border-radius: 60px;
+      background: linear-gradient(145deg, #005533, #002a1a);
       text-decoration: none;
-      color: var(--g);
+      color: #fff;
       position: relative;
-      transition: background 0.15s, border-color 0.15s;
+      transition: transform 0.1s, box-shadow 0.1s;
       -webkit-tap-highlight-color: transparent;
       overflow: hidden;
-    }
-    .nav-card::before {
-      content: '';
-      position: absolute;
-      top: -1px; left: -1px;
-      width: 10px; height: 10px;
-      border-top: 2px solid var(--g);
-      border-left: 2px solid var(--g);
-    }
-    .nav-card::after {
-      content: '';
-      position: absolute;
-      bottom: -1px; right: -1px;
-      width: 10px; height: 10px;
-      border-bottom: 2px solid var(--g);
-      border-right: 2px solid var(--g);
+      box-shadow: 0 6px 24px rgba(0,230,118,0.2), inset 0 1px 0 rgba(0,230,118,0.15);
     }
     .nav-card:active,
     .nav-card:hover {
-      background: rgba(0,230,118,0.07);
-      border-color: var(--g);
+      transform: scale(0.97);
+      box-shadow: 0 2px 10px rgba(0,230,118,0.2);
+    }
+    .nav-card.bomb {
+      border-color: rgba(255,80,0,0.6);
+      background: linear-gradient(145deg, #882200, #440f00);
+      box-shadow: 0 6px 24px rgba(255,80,0,0.2), inset 0 1px 0 rgba(255,120,0,0.15);
+    }
+    .nav-card.bomb:active,
+    .nav-card.bomb:hover {
+      box-shadow: 0 2px 10px rgba(255,80,0,0.2);
     }
 
     /* Sweep animation on hover/tap */
@@ -192,39 +187,26 @@
     }
     .nav-label {
       font-size: clamp(15px, 4vw, 18px);
-      font-weight: 700;
+      font-weight: 900;
       letter-spacing: 5px;
-      text-shadow: 0 0 10px var(--g);
-    }
-    .nav-card.bomb .nav-label {
-      color: #ff6633;
-      text-shadow: 0 0 10px #ff4400;
     }
     .nav-desc {
       font-size: 10px;
       letter-spacing: 2px;
-      color: var(--gdim);
+      color: rgba(255,255,255,0.5);
+    }
+    .nav-card.bomb .nav-label {
+      color: #fff;
     }
     .nav-card.bomb .nav-desc {
-      color: #884422;
+      color: rgba(255,255,255,0.4);
     }
 
     .nav-arrow {
       margin-left: auto;
       font-size: 18px;
-      color: var(--gdim);
+      color: rgba(255,255,255,0.5);
       flex-shrink: 0;
-    }
-    .nav-card.bomb .nav-arrow {
-      color: #884422;
-    }
-    .nav-card:hover .nav-arrow,
-    .nav-card:active .nav-arrow {
-      color: var(--g);
-    }
-    .nav-card.bomb:hover .nav-arrow,
-    .nav-card.bomb:active .nav-arrow {
-      color: #ff6633;
     }
 
     /* ── Footer ──────────────────────────────────────── */
