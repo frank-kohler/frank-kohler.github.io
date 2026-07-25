@@ -145,9 +145,12 @@
 
     /* ── Mute Button ────────────────────────────────── */
     #mute-btn {
+      appearance: none;
+      -webkit-appearance: none;
       background: linear-gradient(145deg, #222, #111);
       border: 3px solid #555;
-      border-radius: 60px;
+      border-radius: 50%;
+      outline: none;
       width: 72px;
       height: 72px;
       cursor: pointer;
@@ -163,9 +166,12 @@
     #mute-btn:active {
       transform: scale(0.94);
     }
+    #mute-btn:hover {
+      opacity: 1;
+    }
     #mute-btn.muted {
-      border-color: #ff4444;
       color: #ff4444;
+      opacity: 0.8;
     }
 
     /* ── Start Button ────────────────────────────────── */
