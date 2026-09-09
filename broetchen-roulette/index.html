@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brötchen Roulette</title>
+<style>
+  :root {
+    --bg1: #05010f;
+    --bg2: #0d0426;
+    --neon-pink: #ff2d95;
+    --neon-cyan: #05d9e8;
+    --neon-purple: #b026ff;
+    --neon-yellow: #f9f871;
+    --accent: var(--neon-cyan);
+    --accent2: var(--neon-pink);
+    --text: #eafcff;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    color: var(--text);
+    background:
+      radial-gradient(circle at 50% -10%, rgba(176, 38, 255, 0.35), transparent 55%),
+      radial-gradient(circle at 15% 110%, rgba(5, 217, 232, 0.25), transparent 50%),
+      radial-gradient(circle at 85% 100%, rgba(255, 45, 149, 0.25), transparent 50%),
+      var(--bg1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 16px 64px;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Animated neon grid floor */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background-image:
+      linear-gradient(rgba(5, 217, 232, 0.12) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(176, 38, 255, 0.12) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: radial-gradient(circle at 50% 30%, #000 30%, transparent 80%);
+    animation: gridMove 8s linear infinite;
+  }
+  @keyframes gridMove {
+    from { background-position: 0 0, 0 0; }
+    to   { background-position: 0 44px, 44px 0; }
+  }
+
+  h1 {
+    font-size: clamp(2.2rem, 6vw, 4rem);
+    margin: 0 0 8px;
+    text-align: center;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #fff;
+    text-shadow:
+      0 0 6px #fff,
+      0 0 14px var(--neon-cyan),
+      0 0 28px var(--neon-cyan),
+      0 0 46px var(--neon-pink),
+      0 0 70px var(--neon-pink);
+    animation: flicker 4s infinite alternate;
+  }
+  @keyframes flicker {
+    0%, 92%, 100% { opacity: 1; }
+    93% { opacity: 0.7; }
+    94% { opacity: 1; }
+    96% { opacity: 0.6; }
+    97% { opacity: 1; }
+  }
+
+  .subtitle {
+    margin: 0 0 28px;
+    font-size: 1.05rem;
+    color: var(--neon-yellow);
+    text-shadow: 0 0 8px rgba(249, 248, 113, 0.8);
+    letter-spacing: 1px;
+  }
+
+  /* Rad links, Teilnehmer-Tabelle rechts daneben. */
+  .stage {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 48px;
+    width: 100%;
+    max-width: 940px;
+    margin-top: 28px;
+  }
+  .wheel-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .wheel-wrap {
+    position: relative;
+    width: min(80vw, 440px);
+    height: min(80vw, 440px);
+    margin-bottom: 16px;
+  }
+  .pointer {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 18px solid transparent;
+    border-right: 18px solid transparent;
+    border-top: 32px solid var(--neon-pink);
+    filter:
+      drop-shadow(1.5px 0 0 #000)
+      drop-shadow(-1.5px 0 0 #000)
+      drop-shadow(0 1.5px 0 #000)
+      drop-shadow(0 -1.5px 0 #000)
+      drop-shadow(0 0 8px var(--neon-pink));
+    z-index: 5;
+    transform-origin: 50% 20%;
+    transition: transform 0.11s ease;
+  }
+
+  .wheel {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 6px solid #05010f;
+    box-shadow:
+      0 0 0 3px var(--neon-cyan),
+      0 0 18px var(--neon-cyan),
+      0 0 36px var(--neon-pink),
+      0 0 60px rgba(176, 38, 255, 0.6),
+      inset 0 0 30px rgba(0, 0, 0, 0.6);
+    cursor: pointer;
+    transition: box-shadow 0.3s ease;
+    display: block;
+  }
+  .wheel:hover {
+    box-shadow:
+      0 0 0 3px var(--neon-pink),
+      0 0 22px var(--neon-pink),
+      0 0 44px var(--neon-cyan),
+      0 0 70px rgba(5, 217, 232, 0.7),
+      inset 0 0 30px rgba(0, 0, 0, 0.6);
+  }
+
+  /* Intensiveres Leuchten waehrend das Rad dreht. */
+  .wheel.spinning {
+    box-shadow:
+      0 0 0 3px var(--neon-pink),
+      0 0 30px var(--neon-pink),
+      0 0 60px var(--neon-cyan),
+      0 0 100px rgba(5, 217, 232, 0.85),
+      inset 0 0 30px rgba(0, 0, 0, 0.6);
+    animation: spinGlow 0.7s ease-in-out infinite alternate;
+  }
+  @keyframes spinGlow {
+    from { filter: brightness(1) saturate(1); }
+    to   { filter: brightness(1.18) saturate(1.25); }
+  }
+
+  /* Aufblitzen beim Gewinner. */
+  @keyframes winnerFlash {
+    0%, 100% {
+      box-shadow:
+        0 0 0 3px var(--neon-cyan),
+        0 0 18px var(--neon-cyan),
+        0 0 36px var(--neon-pink),
+        0 0 60px rgba(176, 38, 255, 0.6),
+        inset 0 0 30px rgba(0, 0, 0, 0.6);
+    }
+    50% {
+      box-shadow:
+        0 0 0 6px var(--neon-yellow),
+        0 0 45px var(--neon-yellow),
+        0 0 90px var(--neon-pink),
+        inset 0 0 30px rgba(0, 0, 0, 0.6);
+    }
+  }
+  .wheel.win { animation: winnerFlash 0.45s ease 3; }
+
+  .wheel.disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  .hub {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 56px;
+    height: 56px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #fff, var(--neon-cyan) 55%, var(--neon-purple));
+    box-shadow:
+      0 0 0 4px #05010f,
+      0 0 12px var(--neon-cyan),
+      0 0 26px var(--neon-pink);
+    z-index: 4;
+    pointer-events: none;
+  }
+
+  .result {
+    min-height: 2.4rem;
+    font-size: 1.7rem;
+    font-weight: 700;
+    text-align: center;
+    margin: 8px 0 24px;
+    letter-spacing: 0.5px;
+    text-shadow: 0 0 10px rgba(234, 252, 255, 0.5);
+  }
+  .result .name {
+    color: var(--neon-yellow);
+    text-shadow:
+      0 0 8px var(--neon-yellow),
+      0 0 18px var(--neon-pink),
+      0 0 30px var(--neon-pink);
+  }
+  @keyframes revealPop {
+    0%   { transform: scale(0.6); opacity: 0; }
+    60%  { transform: scale(1.18); opacity: 1; }
+    100% { transform: scale(1); }
+  }
+  .result.reveal { animation: revealPop 0.6s ease; }
+
+  .panel {
+    background: rgba(13, 4, 38, 0.55);
+    border: 1px solid rgba(5, 217, 232, 0.4);
+    border-radius: 16px;
+    padding: 20px 24px;
+    width: min(90vw, 360px);
+    backdrop-filter: blur(8px);
+    box-shadow:
+      0 0 18px rgba(5, 217, 232, 0.25),
+      inset 0 0 24px rgba(176, 38, 255, 0.12);
+  }
+
+  .panel h2 {
+    margin: 0 0 14px;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 10px rgba(5, 217, 232, 0.7);
+  }
+
+  .name-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 6px;
+  }
+
+  .name-list li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 10px;
+    border-radius: 10px;
+    transition: background 0.15s, box-shadow 0.15s;
+    border: 1px solid transparent;
+  }
+  .name-list li:hover {
+    background: rgba(5, 217, 232, 0.08);
+    border-color: rgba(5, 217, 232, 0.4);
+    box-shadow: 0 0 12px rgba(5, 217, 232, 0.25);
+  }
+  .name-list li .row-main {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+    cursor: pointer;
+    font-size: 1.05rem;
+  }
+  .name-list li .row-main .nm {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .step {
+    width: 24px;
+    height: 24px;
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1;
+    color: rgba(234, 252, 255, 0.5);
+    background: transparent;
+    border: 1px solid rgba(234, 252, 255, 0.18);
+    border-radius: 8px;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.15s, color 0.15s, border-color 0.15s, background 0.15s, transform 0.1s;
+  }
+  .step:hover {
+    opacity: 1;
+    color: var(--neon-cyan);
+    border-color: rgba(5, 217, 232, 0.6);
+    background: rgba(5, 217, 232, 0.1);
+  }
+  .step:active { transform: scale(0.9); }
+  .step:disabled { opacity: 0.15; cursor: not-allowed; }
+
+  .name-list input {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--neon-pink);
+    cursor: pointer;
+    filter: drop-shadow(0 0 4px rgba(255, 45, 149, 0.8));
+  }
+
+  .hint {
+    margin-top: 14px;
+    font-size: 0.85rem;
+    opacity: 0.7;
+    text-align: center;
+    color: var(--neon-purple);
+    text-shadow: 0 0 6px rgba(176, 38, 255, 0.6);
+  }
+
+  .count-badge {
+    width: 40px;
+    box-sizing: border-box;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+    color: #05010f;
+    background: var(--neon-cyan);
+    box-shadow: 0 0 10px rgba(5, 217, 232, 0.7);
+  }
+
+  .pct-badge {
+    width: 62px;
+    box-sizing: border-box;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+    color: #05010f;
+    background: var(--neon-pink);
+    box-shadow: 0 0 10px rgba(255, 45, 149, 0.7);
+  }
+
+  /* Hervorhebung des gerade aktualisierten Zaehlers. */
+  @keyframes bump {
+    0%   { transform: scale(1); }
+    30%  { transform: scale(1.45); }
+    100% { transform: scale(1); }
+  }
+  .count-badge.bumped {
+    width: auto;
+    background: var(--neon-yellow);
+    color: #05010f;
+    box-shadow: 0 0 14px rgba(249, 248, 113, 0.95), 0 0 28px rgba(249, 248, 113, 0.6);
+    animation: bump 0.6s ease;
+  }
+  .count-badge.bumped .old {
+    text-decoration: line-through;
+    opacity: 0.55;
+    margin-right: 5px;
+    font-weight: 600;
+  }
+
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 16px;
+    justify-content: center;
+  }
+
+  .btn {
+    font: inherit;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--text);
+    background: rgba(13, 4, 38, 0.7);
+    border: 1px solid var(--neon-pink);
+    border-radius: 12px;
+    padding: 10px 18px;
+    cursor: pointer;
+    transition: box-shadow 0.15s, transform 0.1s, background 0.15s;
+    box-shadow: 0 0 10px rgba(255, 45, 149, 0.4), inset 0 0 12px rgba(255, 45, 149, 0.12);
+    text-shadow: 0 0 8px rgba(255, 45, 149, 0.7);
+  }
+  .btn:hover {
+    box-shadow: 0 0 18px rgba(255, 45, 149, 0.8), inset 0 0 16px rgba(255, 45, 149, 0.2);
+    background: rgba(255, 45, 149, 0.12);
+  }
+  .btn:active { transform: scale(0.96); }
+  .btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+</style>
+</head>
+<body>
+  <h1>Brötchen Roulette</h1>
+  <p class="subtitle">Wer holt die Brötchen? 🥐</p>
+
+  <div class="stage">
+    <div class="wheel-area">
+      <div class="wheel-wrap">
+        <div class="pointer"></div>
+        <canvas class="wheel" id="wheel" width="440" height="440"></canvas>
+        <div class="hub"></div>
+      </div>
+
+      <div class="result" id="result">Klick auf das Rad zum Drehen!</div>
+    </div>
+
+    <div class="panel">
+      <h2>Teilnehmer</h2>
+      <ul class="name-list" id="nameList"></ul>
+      <p class="hint">Namen an- oder abhaken, um das Rad anzupassen.</p>
+    </div>
+  </div>
+
+<script>
+  const COLORS = [
+    "#ff006e", "#00e5ff", "#9d00ff", "#ffd000",
+    "#00ff66", "#ff5e00", "#2979ff", "#ff1744",
+    "#00e676", "#d500f9", "#ffea00", "#18ffff"
+  ];
+
+  // Dunklere Variante einer Hex-Farbe (fuer den Radial-Verlauf pro Segment).
+  function darken(hex, factor) {
+    const n = parseInt(hex.slice(1), 16);
+    const r = Math.round(((n >> 16) & 255) * factor);
+    const g = Math.round(((n >> 8) & 255) * factor);
+    const b = Math.round((n & 255) * factor);
+    return `rgb(${r}, ${g}, ${b})`;
+  }
+
+  const canvas = document.getElementById("wheel");
+  const ctx = canvas.getContext("2d");
+  const nameListEl = document.getElementById("nameList");
+  const resultEl = document.getElementById("result");
+
+  let currentRotation = 0; // in degrees
+  let spinning = false;
+
+  // Fetch-count state
+  let counts = {};            // { name: number } aus der JSON-Datei
+  let allNames = [];          // stabile Reihenfolge fuer das Rad (alphabetisch)
+  const selected = new Set(); // aktuell angehakte Namen
+  let initialized = false;    // erster erfolgreicher Load waehlt alle aus
+  let bumpName = null;        // gerade aktualisierter Name (Hervorhebung)
+  let bumpOld = null;         // dessen vorheriger Wert
+
+  // Baut die Namensliste, sortiert nach Anzahl (hoechste zuerst).
+  function renderList() {
+    const order = [...allNames].sort((a, b) =>
+      (counts[b] ?? 0) - (counts[a] ?? 0) || a.localeCompare(b, "de"));
+    const pct = {};
+    for (const seg of getSegments()) pct[seg.name] = seg.frac;
+    nameListEl.innerHTML = "";
+    for (const name of order) {
+      const li = document.createElement("li");
+
+      const label = document.createElement("label");
+      label.className = "row-main";
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = selected.has(name);
+      cb.value = name;
+      cb.addEventListener("change", () => {
+        if (cb.checked) selected.add(name); else selected.delete(name);
+        resultEl.innerHTML = "Klick auf das Rad zum Drehen!";
+        renderList();
+        drawWheel();
+      });
+      const span = document.createElement("span");
+      span.className = "nm";
+      span.textContent = name;
+      label.appendChild(cb);
+      label.appendChild(span);
+
+      const pctBadge = document.createElement("span");
+      pctBadge.className = "pct-badge";
+      pctBadge.textContent = selected.has(name) ? (pct[name] * 100).toFixed(1) + "%" : "—";
+      pctBadge.title = "Chance, gezogen zu werden";
+
+      const minus = document.createElement("button");
+      minus.type = "button";
+      minus.className = "step";
+      minus.textContent = "−";
+      minus.title = "Anzahl verringern";
+      minus.disabled = (counts[name] ?? 0) <= 0;
+      minus.addEventListener("click", () => changeCount(name, -1));
+
+      const badge = document.createElement("span");
+      badge.title = "Bisher geholt";
+      if (name === bumpName) {
+        badge.className = "count-badge bumped";
+        badge.innerHTML = `<span class="old">${bumpOld}</span>${counts[name] ?? 0}`;
+      } else {
+        badge.className = "count-badge";
+        badge.textContent = counts[name] ?? 0;
+      }
+
+      const plus = document.createElement("button");
+      plus.type = "button";
+      plus.className = "step";
+      plus.textContent = "+";
+      plus.title = "Anzahl erhöhen";
+      plus.addEventListener("click", () => changeCount(name, +1));
+
+      li.appendChild(label);
+      li.appendChild(pctBadge);
+      li.appendChild(badge);
+      li.appendChild(minus);
+      li.appendChild(plus);
+      nameListEl.appendChild(li);
+    }
+  }
+
+  // Anzahl manuell in 1er-Schritten aendern und speichern.
+  function changeCount(name, delta) {
+    counts[name] = Math.max(0, (counts[name] ?? 0) + delta);
+    renderList();
+    drawWheel();
+    persistCounts();
+  }
+
+  // Uebernimmt Zaehlerdaten vom Server: Namen ableiten, Liste + Rad aktualisieren.
+  function applyCounts(data) {
+    if (!data || typeof data !== "object") return;
+    counts = {};
+    for (const [k, v] of Object.entries(data)) {
+      const n = Number(v);
+      counts[k] = Number.isFinite(n) ? n : 0;
+    }
+    allNames = Object.keys(counts).sort((a, b) => a.localeCompare(b, "de"));
+    if (!initialized) {
+      allNames.forEach(n => selected.add(n)); // beim ersten Laden alle auswaehlen
+      initialized = true;
+    } else {
+      for (const n of [...selected]) if (!(n in counts)) selected.delete(n);
+    }
+    renderList();
+    drawWheel();
+  }
+
+  // --- Server-backed load & save (via /api/counts) --------------------------
+  async function loadCounts() {
+    try {
+      const res = await fetch("/api/counts");
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      applyCounts(await res.json());
+    } catch (err) {
+      console.error("Konnte Zählerstände nicht laden:", err);
+    }
+  }
+
+  async function persistCounts() {
+    try {
+      const res = await fetch("/api/counts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(counts)
+      });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+    } catch (err) {
+      console.error("Speichern fehlgeschlagen:", err);
+    }
+  }
+
+  loadCounts();
+
+  function getSelectedNames() {
+    return allNames.filter(n => selected.has(n));
+  }
+
+  // Gewichtete Segmente: weniger Broetchen => groesserer Anteil (hoehere Chance).
+  function getSegments() {
+    const names = getSelectedNames();
+    const weights = names.map(n => 1 / ((counts[n] ?? 0) + 1));
+    const total = weights.reduce((a, b) => a + b, 0) || 1;
+    let angle = 0;
+    return names.map((name, i) => {
+      const frac = weights[i] / total;
+      const seg = {
+        name, frac,
+        start: angle,
+        end: angle + frac * Math.PI * 2,
+        color: COLORS[i % COLORS.length]
+      };
+      angle = seg.end;
+      return seg;
+    });
+  }
+
+  function drawWheel() {
+    const names = getSelectedNames();
+    const size = canvas.width;
+    const center = size / 2;
+    const radius = center;
+    ctx.clearRect(0, 0, size, size);
+
+    if (names.length === 0) {
+      ctx.fillStyle = "#0d0426";
+      ctx.beginPath();
+      ctx.arc(center, center, radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#05d9e8";
+      ctx.font = "20px 'Segoe UI', sans-serif";
+      ctx.textAlign = "center";
+      ctx.shadowColor = "#05d9e8";
+      ctx.shadowBlur = 12;
+      ctx.fillText("Keine Namen", center, center);
+      ctx.shadowBlur = 0;
+      return;
+    }
+
+    const segments = getSegments();
+
+    segments.forEach(({ name, start, end, color }) => {
+      ctx.beginPath();
+      ctx.moveTo(center, center);
+      ctx.arc(center, center, radius, start, end);
+      ctx.closePath();
+      // Radial-Verlauf: dunkler Kern -> leuchtender Rand fuer kraeftige Farben.
+      const grad = ctx.createRadialGradient(center, center, radius * 0.12, center, center, radius);
+      grad.addColorStop(0, darken(color, 0.5));
+      grad.addColorStop(0.55, color);
+      grad.addColorStop(1, color);
+      ctx.fillStyle = grad;
+      ctx.fill();
+      // Neon segment edges
+      ctx.strokeStyle = "rgba(5, 5, 15, 0.85)";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // Text with neon glow
+      ctx.save();
+      ctx.translate(center, center);
+      ctx.rotate((start + end) / 2);
+      ctx.textAlign = "right";
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 20px 'Segoe UI', sans-serif";
+      ctx.shadowColor = "#000";
+      ctx.shadowBlur = 6;
+      ctx.fillText(name, radius - 20, 7);
+      ctx.restore();
+    });
+
+    // Inner neon ring
+    ctx.beginPath();
+    ctx.arc(center, center, radius - 4, 0, Math.PI * 2);
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.6)";
+    ctx.lineWidth = 2;
+    ctx.shadowColor = "#05d9e8";
+    ctx.shadowBlur = 16;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+
+  function spin() {
+    if (spinning) return;
+    const segments = getSegments();
+    if (segments.length === 0) {
+      resultEl.textContent = "Bitte mindestens einen Namen auswählen!";
+      return;
+    }
+
+    spinning = true;
+    canvas.classList.add("spinning");
+    resultEl.textContent = "Es dreht sich… 🥁";
+
+    // Gewinner gewichtet nach Flaechenanteil ziehen (weniger Broetchen = hoehere Chance).
+    const r = Math.random();
+    let acc = 0;
+    let winnerSeg = segments[segments.length - 1];
+    for (const seg of segments) {
+      acc += seg.frac;
+      if (r <= acc) { winnerSeg = seg; break; }
+    }
+
+    // Zeiger sitzt oben (270° im Canvas-Frame, 0° zeigt nach rechts).
+    const winnerCenterDeg = ((winnerSeg.start + winnerSeg.end) / 2) * 180 / Math.PI;
+    const targetAngle = 270 - winnerCenterDeg;
+
+    // Zufaellige Anzahl an Umdrehungen + Dauer fuer Spannung.
+    const extraSpins = 8 + Math.floor(Math.random() * 4); // 8..11 Umdrehungen
+    const normalizedCurrent = ((currentRotation % 360) + 360) % 360;
+    const delta = (((targetAngle - normalizedCurrent) % 360) + 360) % 360;
+    const startRot = currentRotation;
+    const endRot = currentRotation + extraSpins * 360 + delta;
+    currentRotation = endRot;
+    const duration = 7000 + Math.random() * 2500; // 7–9,5 Sekunden
+
+    const t0 = performance.now();
+    let lastSeg = -1;
+    let suspenseShown = false;
+
+    function frame(now) {
+      const t = Math.min((now - t0) / duration, 1);
+      // easeOutQuint: sehr langsames, spannendes Auslaufen.
+      const eased = 1 - Math.pow(1 - t, 5);
+      const rot = startRot + (endRot - startRot) * eased;
+      canvas.style.transform = `rotate(${rot}deg)`;
+
+      // Welches Segment steht gerade unter dem Zeiger?
+      const localDeg = (((270 - rot) % 360) + 360) % 360;
+      const localRad = localDeg * Math.PI / 180;
+      let idx = segments.findIndex(s => localRad >= s.start && localRad < s.end);
+      if (idx === -1) idx = segments.length - 1;
+      if (idx !== lastSeg && t < 1) {
+        lastSeg = idx;
+        playTick(t);
+        kickPointer();
+      }
+
+      // Kurz vor Schluss zusaetzliche Spannung.
+      if (t > 0.85 && !suspenseShown) {
+        suspenseShown = true;
+        resultEl.textContent = "Und der Gewinner ist… 😳";
+      }
+
+      if (t < 1) {
+        requestAnimationFrame(frame);
+      } else {
+        finishSpin(winnerSeg);
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function finishSpin(winnerSeg) {
+    spinning = false;
+    canvas.classList.remove("spinning");
+    const winner = winnerSeg.name;
+    bumpOld = counts[winner] ?? 0;
+    bumpName = winner;
+    counts[winner] = bumpOld + 1;
+    renderList();
+    persistCounts();
+    resultEl.innerHTML = `🥐 <span class="name">${winner}</span> holt die Brötchen!`;
+    // Reveal-Animation neu starten.
+    resultEl.classList.remove("reveal");
+    void resultEl.offsetWidth;
+    resultEl.classList.add("reveal");
+    // Rad kurz aufblitzen lassen.
+    canvas.classList.remove("win");
+    void canvas.offsetWidth;
+    canvas.classList.add("win");
+    setTimeout(() => canvas.classList.remove("win"), 1500);
+    playFanfare();
+    // Hervorhebung nach kurzer Zeit wieder entfernen.
+    setTimeout(() => { bumpName = null; bumpOld = null; renderList(); }, 3500);
+  }
+
+  // --- Sound & Zeiger-Effekt -------------------------------------------------
+  let audioCtx = null;
+  function audio() {
+    if (!audioCtx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) audioCtx = new AC();
+    }
+    return audioCtx;
+  }
+  // Kurzer Klick pro passiertem Segment (Tonhoehe steigt zum Ende hin).
+  function playTick(progress) {
+    const ac = audio();
+    if (!ac) return;
+    const osc = ac.createOscillator();
+    const gain = ac.createGain();
+    osc.type = "square";
+    osc.frequency.value = 850 + progress * 500;
+    const now = ac.currentTime;
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.12, now + 0.004);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.06);
+    osc.connect(gain).connect(ac.destination);
+    osc.start(now);
+    osc.stop(now + 0.07);
+  }
+  // Kleine Gewinner-Fanfare.
+  function playFanfare() {
+    const ac = audio();
+    if (!ac) return;
+    const notes = [523.25, 659.25, 783.99, 1046.5]; // C E G C
+    notes.forEach((freq, i) => {
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.type = "triangle";
+      osc.frequency.value = freq;
+      const start = ac.currentTime + i * 0.12;
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(0.2, start + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.35);
+      osc.connect(gain).connect(ac.destination);
+      osc.start(start);
+      osc.stop(start + 0.4);
+    });
+  }
+  const pointerEl = document.querySelector(".pointer");
+  function kickPointer() {
+    pointerEl.style.transform = "translateX(-50%) rotate(-14deg)";
+    requestAnimationFrame(() => {
+      pointerEl.style.transform = "translateX(-50%) rotate(0deg)";
+    });
+  }
+
+  canvas.addEventListener("click", spin);
+
+  drawWheel();
+</script>
+</body>
+</html>
