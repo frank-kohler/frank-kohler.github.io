@@ -217,21 +217,31 @@ footer {
 .video-wrap.gift-mode .gift-reveal {
   position: relative;
   inset: unset;
-  display: flex;
-  flex-direction: column;
+  display: block;
   border-radius: 19px;
   overflow: hidden;
   animation: fadeIn .8s ease both;
 }
 
 .gift-img {
+  position: absolute;
+  inset: 0;
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  z-index: 0;
   display: block;
 }
 
 .gift-message {
-  background: linear-gradient(180deg, #003d5c 0%, #001a2e 100%);
+  position: relative;
+  z-index: 1;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 28, 46, .54) 0%,
+    rgba(0, 14, 28, .66) 100%
+  );
   padding: clamp(22px, 5vw, 42px) clamp(22px, 6vw, 52px);
 }
 
@@ -240,7 +250,8 @@ footer {
   font-size: clamp(14px, 4vw, 16px);
   font-weight: 400;
   line-height: 1.8;
-  color: rgba(215, 238, 255, .92);
+  color: rgba(215, 238, 255, .95);
+  text-shadow: 0 1px 5px rgba(0, 0, 0, .6);
   margin: 0 0 .8em;
 }
 
@@ -370,11 +381,6 @@ footer {
           <p>Man ist jung genug für jeden Blödsinn …<br>
           aber alt genug, um zu wissen:<br>
           <strong>Jetzt ist mal Wellness angesagt!</strong></p>
-
-          <p>Und deshalb haben wir uns was Besonderes für dich überlegt.</p>
-
-          <p>Denn du bekommst nicht einfach irgendein Geschenk …<br>
-          Nein!</p>
 
           <p class="gift-highlight">Es geht für dich in die Badewelt Sinsheim! 🌊<br>
           Und wir kommen natürlich mit.</p>
