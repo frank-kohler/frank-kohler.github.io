@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <title>Black Label Online – Lust auf neue Underwear?</title>
+  <meta name="description" content="Black Label Online: Sexy Herrenunterwäsche in Neonfarben. Lust auf neue Underwear?">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #14061f;
+      --panel: #1f0b32;
+      --text: #f6eeff;
+      --muted: #bba8d8;
+      --pink: #ff2d95;
+      --cyan: #19e6ff;
+      --lime: #b6ff3c;
+      --orange: #ff7a1a;
+      --violet: #8b3dff;
+    }
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+    body { overflow-x: clip; display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; }
+    main { flex: 1 0 auto; }
+    .bund, footer { flex-shrink: 0; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(60rem 30rem at 85% -5%, rgba(139,61,255,.35), transparent 70%),
+        radial-gradient(50rem 28rem at -10% 35%, rgba(255,45,149,.18), transparent 70%),
+        var(--bg);
+      color: var(--text);
+      font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.6;
+    }
+    /* Foto als Vollbild-Hintergrund; Gesicht oben rechts, Wäsche unten links */
+    :root { --foto-h: min(50vh, 100vw); }
+    @supports (height: 1dvh) { :root { --foto-h: min(50dvh, 100vw); } }
+    body::before {
+      content: "";
+      position: fixed;
+      top: 1.9rem;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: -1;
+      background:
+        radial-gradient(ellipse 60vw 45vh at 0 0, rgba(20,6,31,.85), rgba(20,6,31,0)),
+        url("roter-Hintergrund.jpeg") 15% 40% / cover no-repeat;
+      filter: brightness(1.08);
+    }
+    a { color: inherit; }
+    :focus-visible { outline: 3px solid var(--cyan); outline-offset: 3px; }
+
+    /* Bund */
+    .bund {
+      background: linear-gradient(90deg, var(--pink), var(--violet), var(--cyan), var(--lime), var(--orange), var(--pink));
+      color: var(--bg);
+      height: 1.9rem;
+    }
+
+    .wrap { width: 100%; max-width: 68rem; margin: 0 auto; padding: 0 max(1.5rem, env(safe-area-inset-right)) 0 max(1.5rem, env(safe-area-inset-left)); }
+
+
+    /* Hero */
+    .hero { padding-top: clamp(4.5rem, 14vw, 9rem); padding-bottom: clamp(4rem, 10vw, 7rem); }
+    .hero > div { max-width: 34rem; }
+    .marke { font-weight: 800; letter-spacing: 0.3em; text-transform: uppercase; font-size: 1rem; color: var(--cyan); text-shadow: 0 0 .6em rgba(25,230,255,.7); margin-bottom: 1.25rem; }
+    h1 {
+      font-size: clamp(2.4rem, 7vw, 4.5rem);
+      line-height: 0.98;
+      letter-spacing: -0.04em;
+      font-weight: 800;
+      margin: 0;
+      color: #ffe3f2;
+      text-shadow: 0 0 .15em #ff7ac0, 0 0 .4em var(--pink), 0 0 .9em var(--pink);
+    }
+    .btn {
+      display: inline-block;
+      margin-top: 1.75rem;
+      background: var(--pink);
+      color: var(--bg);
+      font-weight: 800;
+      padding: 0.85rem 1.6rem;
+      border-radius: 999px;
+      text-decoration: none;
+      box-shadow: 0 0 1.2rem rgba(255,45,149,.6);
+    }
+    .btn:hover { background: #ff5cae; }
+
+    footer { padding: 2rem 1.5rem; text-align: center; font-size: 0.8rem; color: var(--muted); }
+    footer a { text-shadow: 0 0 .6em rgba(20,6,31,.95), 0 1px 3px rgba(0,0,0,.9); display: inline-block; padding: 0.5rem 0.75rem; text-decoration: underline; }
+    footer a:hover { color: var(--cyan); }
+
+    @media (prefers-reduced-motion: no-preference) {
+      h1 { animation: einschalten 1.2s steps(1, end) 1; }
+      @keyframes einschalten {
+        0% { opacity: .15; } 12% { opacity: 1; } 18% { opacity: .2; } 30% { opacity: 1; }
+        38% { opacity: .5; } 46%, 100% { opacity: 1; }
+      }
+    }
+    /* Hochformat (Handy): Text oben, Foto unten */
+    @media (max-aspect-ratio: 1/1) {
+      body::before {
+        top: auto;
+        left: auto;
+        height: var(--foto-h);
+        width: min(100%, calc(var(--foto-h) * 1.2));
+        background: url("roter-Hintergrund.jpeg") 8% 50% / cover no-repeat;
+        -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 22%), linear-gradient(90deg, transparent 0, #000 6%);
+        -webkit-mask-composite: source-in;
+        mask-image: linear-gradient(180deg, transparent 0, #000 22%), linear-gradient(90deg, transparent 0, #000 6%);
+        mask-composite: intersect;
+      }
+    }
+    /* Querformat: Text schmal links oben, im freien Bereich neben dem Model */
+    @media (min-aspect-ratio: 1/1) {
+      .hero { max-width: none; margin: 0; padding-left: max(4vw, env(safe-area-inset-left)); padding-top: clamp(3rem, 6vh, 5rem); }
+      .hero > div { max-width: min(30vw, 30rem); }
+      h1 { font-size: clamp(2.2rem, 3.8vw, 4.5rem); }
+    }
+  </style>
+</head>
+<body>
+  <div class="bund" aria-hidden="true"></div>
+
+  <main>
+    <div class="wrap hero">
+      <div>
+        <div class="marke">Black Label Online</div>
+        <h1>Lust auf neue Underwear?</h1>
+        <a class="btn" href="https://www.ebay.de/str/blacklabelonline" target="_blank" rel="noopener noreferrer">Zum eBay-Shop</a>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <a href="impressum.html">Impressum</a>
+  </footer>
+</body>
+</html>
