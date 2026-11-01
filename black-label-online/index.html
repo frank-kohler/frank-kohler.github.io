@@ -35,8 +35,8 @@
       line-height: 1.6;
     }
     /* Foto als Vollbild-Hintergrund; Gesicht oben rechts, Wäsche unten links */
-    :root { --foto-h: min(50vh, 100vw); }
-    @supports (height: 1dvh) { :root { --foto-h: min(50dvh, 100vw); } }
+    :root { --foto-h: min(58vh, 115vw); }
+    @supports (height: 1dvh) { :root { --foto-h: min(58dvh, 115vw); } }
     body::before {
       content: "";
       position: fixed;
@@ -107,10 +107,10 @@
         left: auto;
         height: var(--foto-h);
         width: min(100%, calc(var(--foto-h) * 1.2));
-        background: url("roter-Hintergrund.jpeg") 8% 50% / cover no-repeat;
-        -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 22%), linear-gradient(90deg, transparent 0, #000 6%);
+        background: url("roter-Hintergrund.jpeg") 12% 50% / cover no-repeat;
+        -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 16%), linear-gradient(90deg, transparent 0, #000 6%);
         -webkit-mask-composite: source-in;
-        mask-image: linear-gradient(180deg, transparent 0, #000 22%), linear-gradient(90deg, transparent 0, #000 6%);
+        mask-image: linear-gradient(180deg, transparent 0, #000 16%), linear-gradient(90deg, transparent 0, #000 6%);
         mask-composite: intersect;
       }
     }
